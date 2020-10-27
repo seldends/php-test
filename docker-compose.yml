@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: php-app-db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - MYSQL_DATABASE=crud-app
+    volumes: 
+      - dbdata:/db/mysql
+    command: '--default-authentication-plugin=mysql_native_password'
+    networks:
+      - app-network
+
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: php-img
+    container_name: php-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    networks:
+      - app-network
+
+  webserver:
+    depends_on:
+      - app
+    image: nginx:1.17-alpine
+    container_name: php-app-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/var/www
+      # - ./nginx:/etc/nginx/conf.d
+      - ./nginx:/etc/nginx/sites-available
+    networks:
+      - app-network
+volumes:
+  dbdata:
+
+networks:
+  app-network:
+    driver: bridge  
